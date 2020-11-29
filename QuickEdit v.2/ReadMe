@@ -1,0 +1,7 @@
+Шаблон задается в файле qe.txt  вида XXX YYY  . Где XXX то, что надо заменить, а YYY то, на что меняется. Разделены два слова пробелом.
+Если не указан путь сохранения для измененного файла, то создается папка в исходной директории с именем qe.
+В случае выбора папки через кнопку необходимо щелкнуть в нужной папке по любому файлу.
+
+The search words are set in the qe.txt file of the form XXX YYY. Where XXX is what needs to be replaced, and YYY is what is changed to. Two words are separated by a space.
+If the save path for the modified file is not specified, then a folder is created in the source directory named qe.
+If you select a folder using the button, you must click on any file in the desired folder.
