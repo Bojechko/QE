@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.071,=D:\proj\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.195,=D:\proj\Unit1.pas</Transaction>
+    <Transaction>2020.09.27 20:53:08.469,D:\proj\QuickEditCMD.dproj=D:\proj\Project3.dproj</Transaction>
+    <Transaction>2020.09.27 21:28:09.647,D:\proj\QuickEditCMD\QuickEditCMD.dproj=D:\proj\QuickEditCMD.dproj</Transaction>
+  </Transactions>
+</BorlandProject>

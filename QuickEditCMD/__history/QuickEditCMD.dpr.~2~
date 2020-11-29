@@ -1,0 +1,51 @@
+program QuickEditCMD;
+
+{$APPTYPE CONSOLE}
+
+{$R *.res}
+
+uses
+  Winapi.Windows,
+  Winapi.Messages,
+  System.SysUtils,
+  System.Variants,
+  System.Classes,
+  Vcl.Graphics,
+  Vcl.Controls,
+  Vcl.Forms,
+  Vcl.Dialogs,
+  Vcl.Buttons,
+  Vcl.StdCtrls,
+  StrUtils,
+  shellapi,
+  QEMain;
+function ShowHelp() : boolean;
+begin
+  showmessage('Формат запуска из коммандной строки:'+ #10#13
+       +'QuickEditABC.exe Param1, Param2, Param3'+ #10#13
+       + 'Param1 - Путь к папке исходника, на конце нет обратного слеша ' + #10#13
+       + 'Param2 - Путь к папке шаблона, на конце нет обратного слеша ' + #10#13
+       + 'Param3 - Путь к папке измененного проекта, на конце нет обратного слеша ');
+  Application.Terminate;
+end;
+
+var
+PathDirShab, PathDirSource, PathDirResult: string;
+QEMain: QEClass;
+
+begin
+
+  if ParamStr(1)='/?' then showhelp;
+    If ParamStr(1) <> '' then
+    begin
+      try
+        PathDirSource := Paramstr(1);
+        PathDirShab := Paramstr(2);
+        PathDirResult:= Paramstr(3);
+        QEMain.CreateResult(PathDirShab,PathDirSource,PathDirResult);
+      except
+        showhelp ;
+      end;
+    end
+
+end.

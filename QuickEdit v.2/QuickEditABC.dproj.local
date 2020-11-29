@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.781,=D:\proj\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.071,=D:\proj\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.195,=D:\proj\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.604,D:\proj\Unit1.dfm=D:\Rabota\QuickEdit.dfm</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.604,D:\proj\Unit1.pas=D:\Rabota\QuickEdit.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.308,=D:\proj\QuickEdit\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.677,D:\proj\Project3.dproj=D:\Rabota\QuickEditABC.dproj</Transaction>
+    <Transaction>2020.09.27 16:07:07.064,=D:\proj\QuickEdit\Unit1.pas</Transaction>
+    <Transaction>2020.09.27 16:09:12.087,=D:\proj\QuickEdit\Unit1.pas</Transaction>
+    <Transaction>2020.09.27 16:15:09.264,D:\proj\QuickEdit v.2\Unit1.pas=D:\proj\QuickEdit\Unit1.pas</Transaction>
+    <Transaction>2020.09.27 16:15:19.172,D:\proj\QuickEdit v.2\QuickEditABC.dproj=D:\proj\QuickEdit\QuickEditABC.dproj</Transaction>
+    <Transaction>2020.09.27 17:19:38.789,D:\proj\QuickEdit v.2\QEMain.pas=D:\proj\QuickEdit v.2\Unit1.pas</Transaction>
+  </Transactions>
+</BorlandProject>

@@ -1,0 +1,15 @@
+program QuickEditABC;
+
+uses
+  Vcl.Forms,
+  QuickEdit in '..\QuickEdit\QuickEdit.pas' {QE},
+  Unit1 in 'Unit1.pas';
+
+{$R *.res}
+
+begin
+  Application.Initialize;
+  Application.MainFormOnTaskbar := True;
+  Application.CreateForm(TQE, QE);
+  Application.Run;
+end.

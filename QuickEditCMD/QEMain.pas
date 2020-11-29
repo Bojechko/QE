@@ -1,0 +1,448 @@
+unit QEMain;
+
+
+interface
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.Buttons, Vcl.StdCtrls,StrUtils, shellapi;
+
+type
+  QEClass = class (TObject)
+  private
+    procedure FindExclude( workspace : string; i:integer; Shab: TStringList; iscl: string; FindFile: TSearchRec;FindAll: TSearchRec); //поиск исключений
+    procedure CreateD(dir: string); // Создание новой папки с результатом
+    procedure FindFiles(workspace: string; dir: string; Rasch: TStringList; Folders: TStringList; Shab: TStringList;  iscl: string);   // поиск файла
+    procedure Change(global: integer;workspace: string;i:integer; dir: string; Folders: TStringList; Shab: TStringList;  iscl: string;FindFile: TSearchRec;FindAll: TSearchRec);//Основной метод, где все меняется
+//    procedure Create(); //Конструктор
+  public
+    procedure CreateResult(PathDirShab: string;PathDirSource:string;PathDirResult:string); // Старт
+
+  end;
+
+//var
+//var
+ // //QE: T//QE;
+  //workspace: string; //путь к файлам
+ // i,global: integer; //счетчик открытых фаловж и global для навигации по папкам
+ // i:integer;
+  //f,f2:TFileStream;  //файл
+  //FindFile: TSearchRec;//поиск нужного файла
+  //dir: string;// новая папка
+  //iscl: string ; //исключения
+ // Rasch: TStringList;// массив с расширениями
+  //Folders: TStringList;// массив с папками
+  //FindAll: TSearchRec;//поиск всех файла
+  //Shab: TStringList; //шаблон
+
+implementation
+procedure QEClass.FindExclude(workspace: string;i:integer; Shab: TStringList; iscl: string; FindFile: TSearchRec; FindAll: TSearchRec); //поиск исключений
+var
+  NewName: String;// новое имя файла
+  text,iscl1,iscl2:string;
+  buf:AnsiChar;
+  endEx,startEx,k,kk:integer;
+  Arr : array of Integer;
+  f,f2:TFileStream;
+begin
+    try
+        f:=TFileStream.Create(workspace +'\'+FindFile.Name, fmOpenRead);   // присваиваю файлы
+     //   f2:=TFileStream.Create(dir +'\'+NewName, fmCreate);   // присваиваю файлы
+    except
+       // ShowMessage('Ошибка в FindIscl '+inttostr(i)+' файла');
+       // //QE.Log.Lines.Add ('Ошибка в FindIscl '+ inttostr(i)+' файла');
+    end;
+    try
+       k:=0;//счетчик
+       f.Seek(0,soFromBeginning);
+       repeat
+         f.Read(buf,sizeof(buf));        //читаем
+         text:=text+buf;
+       until f.Position=f.Size ;
+       endEx:=Pos('contains',text); //находим окончание requires
+       startEx:=Pos( 'requires',text);// и его начало
+       if (Pos('requires',text)<>0)  then
+       begin
+           iscl1:= text;  // нашли все слова из requires
+           Delete(iscl1,endEx,text.Length);
+           Delete(iscl1,1,startEx+8);
+           endEx:=0;
+           startEx:=-1;
+           while startEx<>0 do
+           begin
+             startEx:=PosEx(',',iscl1,startEx+2);  //находим все запятые
+             if startEx<>0 then
+             begin
+                 inc(endEx);
+                 setlength(arr,endEx);
+                 arr[endEx-1]:=startEx;
+             end;
+           end;
+           startEx:=PosEx(';',iscl1,startEx+2);
+           if startEx<>0 then
+           begin
+             inc(endEx);
+             setlength(arr,endEx);
+             arr[endEx-1]:=startEx;
+           end;
+           startEx:=-1;
+           k:=0;
+           while startEx<>0 do
+           begin
+             startEx:=PosEx(shab[0],iscl1,startEx+2);  //находим все шаблоны
+             if startEx<>0 then
+             for k:=0 to endEx-1 do
+             begin
+               if (arr[k-1]<=startEx) and(arr[k]>=startEx) then
+               iscl:=iscl+' '+copy(iscl1,arr[k-1],arr[k]-arr[k-1]+1);
+             end;
+           end;
+
+       end;
+       // //QE.Memo1.Lines.Add ('Исключения '+iscl1);
+      // //QE.Log.Lines.Add ('Исключения '+iscl);
+    except
+       // ShowMessage('Ошибка в поиске исключений '+inttostr(i)+' файла');
+      //  //QE.Log.Lines.Add ('Ошибка в поиске исключений'+inttostr(i)+' файла');
+    end;
+    f.Free;
+end;
+
+procedure QEClass.Change(global: integer;workspace: string;i:integer; dir: string; Folders: TStringList; Shab: TStringList; iscl: string; FindFile: TSearchRec;FindAll: TSearchRec ); //замена в найденном файле
+var
+NewName: String;// новое имя файла
+text,iscl2:string;
+buf:AnsiChar;
+BeforeChange: TStringList; //для возвращения исключений на место
+AfterChange: TStringList;
+j,l,k,kk,ll:integer;
+Arr : array of Integer;
+Arr2 : array of Integer; //позиции исключений
+f,f2:TFileStream;
+
+begin
+
+    if (Pos(shab[0],FindFile.Name) <> 0 )then
+    begin
+      NewName:=FindFile.Name;
+    //  //QE.Memo1.Lines.Add ('NewName до замены  '+NewName);
+      NewName:= StringReplace(NewName,shab[0],shab[1],  [rfReplaceAll, rfIgnoreCase]);
+     // //QE.Log.Lines.Add ('NewName после замены  '+NewName);
+    end else    NewName:=FindFile.Name;
+
+    try
+        f:=TFileStream.Create(workspace +Folders[global] +'\'+FindFile.Name, fmOpenRead);   // присваиваю файлы
+        f2:=TFileStream.Create(dir+ Folders[global] + '\'+NewName, fmCreate);   // присваиваю файлы
+    except
+        //ShowMessage('Ошибка в Change 2'+inttostr(i)+' файла');
+        //QE.Log.Lines.Add ('Ошибка в Change 2'+ inttostr(i)+' файла');
+    end;
+    try
+        f.Seek(0,soFromBeginning);
+        repeat
+          f.Read(buf,sizeof(buf));        //читаем
+          text:=text+buf;
+        until f.Position=f.Size;
+        text:= StringReplace(text,shab[0],shab[1],[rfReplaceAll,rfIgnoreCase]);    //замена по шаблону
+        BeforeChange:=TStringList.Create;
+        AfterChange:=TStringList.Create;
+        BeforeChange.Delimiter := ' ' ;
+        AfterChange.Delimiter := ' ' ;
+        BeforeChange.DelimitedText := iscl ;
+        iscl:= StringReplace(iscl,shab[0],shab[1],[rfReplaceAll,rfIgnoreCase]);
+        AfterChange.DelimitedText := iscl ;
+        for j:=0 to AfterChange.Count-1 do
+          text:= StringReplace(text,AfterChange[j],BeforeChange[j],[rfReplaceAll,rfIgnoreCase]);// возвращаю исключения на место
+        //    showmessage (text);
+        f2.Seek(0,soFromBeginning);
+        for j :=0 to text.length do
+          f2.Write(text[j],sizeof(ansichar))   ;
+        //QE.Log.Lines.Add ('Успешная замена '+inttostr(i));
+
+    except
+       // ShowMessage('Ошибка в замене '+inttostr(i)+' файла');
+        //QE.Log.Lines.Add ('Ошибка в замене '+inttostr(i)+' файла');
+
+    end;
+    f2.Free;
+    f.Free;
+end;
+
+procedure  QEClass.CreateD(dir: string);   // создание новой папки с измененными файлами
+begin
+
+    try
+      if(CreateDir(dir)) then
+      //QE.Log.Lines.Add ('Директория создана '+ dir)
+      else
+      begin
+         //QE.Log.Lines.Add ('Ошибка в создании директории '+ dir);
+        // showmessage('Ошибка в создании директории '+ dir);
+         abort;
+      end;
+    except
+      //QE.Log.Lines.Add ('Ошибка в создании директории '+ dir);
+     // showmessage('Ошибка в создании директории '+ dir);
+      abort;
+    end;
+
+end;
+
+ procedure QEClass.FindFiles(workspace: string;dir: string; Rasch: TStringList; Folders: TStringList; Shab: TStringList;  iscl: string);   // поиск файла
+ var
+ global, i, j,kk,l,ll: integer;
+ FindFile: TSearchRec;
+ FindAll: TSearchRec;
+begin
+    CreateD(dir);
+    i:=0;
+    l:=1;
+    try           // поиск подпапок
+      FindFirst(workspace + '\*',faDirectory ,FindFile);
+      if (FindFile.Attr and faDirectory) <> 0 then  // если найденный файл - папка
+      begin
+        if ((FindFile.Name <>ExtractFileName(dir)) and (FindFile.Name <>'QE') ) then
+          if (FindFile.Name <> '.') and (FindFile.Name <> '..') then  // игнорировать служебные папки
+          begin
+            Folders.Add('\'+FindFile.Name);
+            CreateDir(dir+'\'+FindFile.Name);
+            inc(l);
+          end;
+      end;
+
+      while FindNext(FindFile)=0 do
+      begin
+        if (FindFile.Attr and faDirectory) <> 0 then  // если найденный файл - папка
+        begin
+          if ((FindFile.Name <>ExtractFileName(dir)) and (FindFile.Name <>'QE') ) then
+            if (FindFile.Name <> '.') and (FindFile.Name <> '..') then  // игнорировать служебные папки
+            begin
+              Folders.Add('\'+FindFile.Name);
+              CreateDir(dir+'\'+FindFile.Name);
+              inc(l);
+            end;
+        end;
+
+      end;
+      FindClose(FindFile);
+    except
+    //  ShowMessage('Ошибка в поиске папок');
+      //QE.Log.Lines.Add ('Ошибка в поиске папок');
+    end;
+    FindClose(FindFile);
+    ll:=0;
+    for kk:=0 to Folders.Count-1 do
+    begin
+      try
+        FindFirst(workspace + Folders[kk]+'\*',faAnyFile,FindAll);
+        if (FindAll.Name <> '.') and (FindAll.Name <> '..') then
+           for j:=0 to Rasch.Count-1 do // не копировать файлы с нужными расширениями
+           begin
+              if ('*'+ExtractFileExt(workspace + Folders[kk]+FindAll.Name )= Rasch[j]) or (ExtractFileExt(workspace + Folders[kk]+FindAll.Name )='.dpk')  then
+                inc(ll);
+           end;
+           if ll=0 then
+             CopyFile(PWideChar(workspace+ Folders[kk] + '\'+ FindAll.Name), PWideChar(dir+Folders[kk] +'\'+FindAll.Name), false);
+        ll:=0;
+      // kk:=0;
+      while FindNext(FindALL)=0 do
+        begin
+        // inc(kk);
+          if (FindAll.Name <> '.') and (FindAll.Name <> '..') then
+            for j:=0 to Rasch.Count-1 do // не копировать файлы с нужными расширениями
+            begin
+              if ('*'+ExtractFileExt(workspace + Folders[kk]+FindAll.Name )= Rasch[j]) or (ExtractFileExt(workspace + Folders[kk]+FindAll.Name )='.dpk') then
+                inc(ll);
+            end;
+          if ll=0 then
+            CopyFile(PWideChar(workspace+ Folders[kk] + '\'+ FindAll.Name), PWideChar(dir+Folders[kk] +'\'+FindAll.Name), false);
+          ll:=0;
+        // CopyFile(PWideChar(workspace + Folders[kk]+'\'+ FindAll.Name), PWideChar(dir+Folders[kk] +'\'+FindAll.Name), false);
+        end;
+        //   end;
+        FindClose(FindAll);
+      except
+          //QE.Log.Lines.Add ('Ошибка копирования'+inttostr(i)+' '+FindFile.Name);
+      end;
+    end;
+    try           // поиск исключений
+      FindFirst(workspace + '\*.dpk',faAnyFile,FindFile);
+      inc(i);
+      if FindFile.Name = '' then
+        begin
+          //QE.Log.Lines.Add ('dpk не найден ');        //проверка на файлы под условие
+          iscl:='';
+        end else
+        begin
+          //QE.Log.Lines.Add ('Найден dpk #'+inttostr(i)+' '+FindFile.Name);
+          FindExclude(workspace, i, Shab, iscl, FindFile, FindAll);
+          FindFile.Name:='' ;
+        end;
+    except
+      //ShowMessage('Ошибка в поиске первого файла');
+      //QE.Log.Lines.Add ('Ошибка в поиске первого файла');
+    end;
+    for global:=0 to Folders.Count-1 do
+      for j:=0 to Rasch.Count-1 do
+      begin
+        try
+          FindFirst(workspace + Folders[global] +'\*'+Rasch[j],faAnyFile,FindFile);
+          inc(i);
+          if FindFile.Name = '' then
+          begin
+            //QE.Log.Lines.Add ('Ничего не найдено ');        //проверка на файлы под условие
+            // exit;
+          end else
+          begin
+          //QE.Log.Lines.Add ('Найден файл #'+inttostr(i)+' '+FindFile.Name);
+            Change(global, workspace, i, dir, Folders, Shab, iscl, FindFile, FindAll);
+          end;
+
+        except
+          //ShowMessage('Ошибка в поиске первого файла');
+          //QE.Log.Lines.Add ('Ошибка в поиске первого файла');
+        end;
+
+        try
+          while FindNext(FindFile)=0 do
+          begin
+            inc(i);
+            //QE.Log.Lines.Add ('Найден файл #'+inttostr(i)+' '+FindFile.Name);
+            Change(global, workspace, i, dir, Folders, Shab, iscl,  FindFile, FindAll);
+          end;
+        except
+          //  ShowMessage('Ошибка в поиске '+ inttostr(i) +' файла');
+          //QE.Log.Lines.Add ('Ошибка в поиске '+ inttostr(i) +' файла');
+        end;
+    end;
+    //QE.Log.Lines.Add ('Всего найдено файлов '+ inttostr(i)); //добавляем файлы, которые не меняли в новую папку
+    //for kk:=0 to Folders.Count-1 do
+    //   begin
+    FindClose(FindFile);
+end;
+
+procedure QEClass.CreateResult(PathDirShab: string;PathDirSource:string;PathDirResult:string);
+var
+text:string;
+buf:AnsiChar;
+workspace: string;
+f:TFileStream;
+dir: string;
+Rasch: TStringList;
+Folders: TStringList;
+Shab: TStringList;
+iscl: string;
+begin
+   workspace:=PathDirShab;
+  // Create;
+   Rasch:= TStringList.Create;
+   Rasch.Add('*.pas');
+   Rasch.Add('*.dcu');
+   Rasch.Add('*.pas');
+   Rasch.Add('*.dfm');
+   Rasch.Add('*.dproj');
+   Rasch.Add('*.lng');
+   Rasch.Add('*.rc');
+   Shab:= TStringList.Create;
+   Shab.Delimiter := ' ' ;
+   Folders:= TStringList.Create;
+   Folders.Add('');
+   try
+        if DirectoryExists(workspace) then
+        f:=TFileStream.Create(workspace +'\QE.txt', fmOpenRead)
+        else
+        begin
+          // ShowMessage('Ошибка в пути к шаблону ');
+           //QE.Log.Lines.Add ('Ошибка в пути к шаблону');
+           abort;
+        end
+   except
+        //ShowMessage('Ошибка в Кнопке ');
+        //QE.Log.Lines.Add ('Ошибка в Кнопке ');
+   end;
+   try
+     f.Seek(0,soFromBeginning);
+     repeat
+       f.Read(buf,sizeof(buf));        //читаем
+       text:=text+buf;
+     until f.Position=f.Size ;
+   except
+     //QE.Log.Lines.Add ('Ошибка в Кнопке ');
+   end;
+   workspace:=PathDirSource;
+   if not DirectoryExists(workspace) then
+   begin
+     // ShowMessage('Ошибка в пути к исходнику ');
+     //QE.Log.Lines.Add ('Ошибка в пути к исходнику');
+     abort;
+   end ;
+   shab.DelimitedText := text ;// шаблон
+   f.Free;
+   //  if PathDirResult.Text='' then
+   // dir:=workspace+'\QE'
+   //else
+   dir:= PathDirResult ;
+   FindFiles(workspace, dir, rasch, Folders, Shab, iscl);
+   // OpenResult.Visible:=true;
+   // OpenResult.Enabled:=true;
+end;
+
+//procedure  QEClass.Create();
+//var
+//workspace: string;
+//text:string;
+//buf:AnsiChar;
+
+//begin
+   //i:=0;
+    //Log.Text:='';
+  //Shab:= TStringList.Create;
+  //Shab.Delimiter := ' ' ;
+
+ // Folders:= TStringList.Create;
+  //Folders.Add('');
+
+   // if ParamStr(1)='/?' then showhelp;
+   { If ParamStr(1) <> '' then
+    begin
+
+       workspace:=Paramstr(2);
+       try
+         if DirectoryExists(workspace) then
+           f:=TFileStream.Create(workspace +'\//QE.txt', fmOpenRead)
+         else
+         begin
+          // ShowMessage('Ошибка в пути к шаблону ');
+           ShowHelp;
+         end
+       except
+         //ShowMessage('Ошибка в Кнопке ');
+         //QE.Log.Lines.Add ('Ошибка в Кнопке ');
+       end;
+       try
+         f.Seek(0,soFromBeginning);
+         repeat
+           f.Read(buf,sizeof(buf));        //читаем
+           text:=text+buf;
+         until f.Position=f.Size ;
+       except
+         //QE.Log.Lines.Add ('Ошибка в Кнопке ');
+       end;
+       workspace:=Paramstr(1);
+       if not DirectoryExists(workspace) then
+       begin
+          // ShowMessage('Ошибка в пути к исходнику ');
+           Showhelp;
+       end ;
+       shab.DelimitedText := text ;// шаблон
+       f.Free;
+       dir:=ParamStr(3);
+       FindFiles(workspace);
+
+    end
+    else
+      //QE.Visible:=false    }
+
+//end;
+
+end.
+

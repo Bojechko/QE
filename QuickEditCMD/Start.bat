@@ -1,0 +1,1 @@
+D:\proj\QuickEditCMD\Win32\Debug\QuickEditCMD.exe D:\test D:\ D:\test\qwqwqw
