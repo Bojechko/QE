@@ -1,0 +1,13 @@
+This program for searching a given word in a file with the extensions .pas, .dcu, .pas, .dfm, .dproj, .lng, .rc from the selected directory and its subdirectories,
+and replaces it with another word. In this case, the names of the source files are changed. Exceptions are automatically generated 
+(The code section between requires and contains).
+Example: 
+Find: IIS  and change on AAA
+IISsdhfs -> AAAsdhfs
+
+Данная программа предназначена для поиска заданного слова в файлах с расширениями .pas, .dcu, .pas, .dfm, .dproj, .lng, .rc из выбранной директории и ее поддиректорий, 
+и заменяет его на другое слово. При этои названия исходных файлов изменяются. Автоматически формируются исключения (Участок кода между requires и contains). 
+
+Пример: 
+Поиск шаблона: IIS  заменить на AAA
+IISsdhfs -> AAAsdhfs
